@@ -113,6 +113,9 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @interface AWENormalModeTabBarGeneralButton : UIButton
 @end
 
+@interface AWEHPTopTabItemBadgeContentView : UIView
+@end
+
 @interface AWEProgressLoadingView : UIView
 - (id)initWithType:(NSInteger)arg1 title:(NSString *)arg2;
 - (id)initWithType:(NSInteger)arg1 title:(NSString *)arg2 progressTextFont:(UIFont *)arg3 progressCircleWidth:(NSNumber *)arg4;
@@ -227,6 +230,9 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @end
 
 @interface AWEFeedTableView : UIView
+@end
+
+@interface IESLiveFeedDrawerEntranceView : UIView
 @end
 
 @interface AWEPlayInteractionProgressContainerView : UIView
@@ -520,6 +526,11 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @interface AWELiveFeedStatusLabel : UILabel
 @end
 
+@interface WKScrollView : UIView
+@end
+
+@interface IESLiveActivityBannnerView : UIView
+@end
 @interface AWECommentSearchAnchorView : UIView
 - (void)setHidden:(BOOL)hidden;
 - (BOOL)isHidden;
@@ -537,6 +548,10 @@ typedef NS_ENUM(NSInteger, MediaType) {
 - (void)setHidden:(BOOL)hidden;
 - (BOOL)isHidden;
 - (void)layoutSubviews;
+@end
+
+@interface AWEFeedTopBarContainer : UIView
+- (void)applyDYYYTransparency; 
 @end
 
 @interface AWEHPTopBarCTAContainer : UIView
@@ -567,8 +582,8 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @interface AWEUserNameLabel : UIView
 @end
 
-@interface AWEHPTopTabItemBadgeContentView : UIView
+@interface AWEPlayInteractionDescriptionLabel : UILabel
 @end
 
-@interface AWEPlayInteractionDescriptionLabel : UILabel
+@interface AWEConcernSkylightCapsuleView : UIView
 @end
