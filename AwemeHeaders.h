@@ -531,7 +531,7 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @interface AWELiveFeedStatusLabel : UILabel
 @end
 
-@interface WKScrollView : UIView
+@interface BDXWebView : UIView
 @end
 
 @interface IESLiveActivityBannnerView : UIView
@@ -594,4 +594,30 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @end
 //直播发现
 @interface AWEFeedLiveTabRevisitControlView : UIView
+@end
+//直播 退出清屏、投屏按钮
+@interface IESLiveButton : UIView
+@end
+//直播点歌
+@interface IESLiveKTVSongIndicatorView : UIView
+@end
+//图片滑条
+@interface AWEStoryProgressContainerView : UIView 
+@property (nonatomic, strong, readonly) UIView *superview;
+@property (nonatomic, assign, getter=isHidden) BOOL hidden;
+- (void)layoutSubviews; 
+- (void)updateIndicatorWithPageCount:(NSInteger)count; 
+@end
+
+@interface AWESearchAnchorListModel : NSObject
+- (id)init;
+@end
+
+@interface AWEPlayInteractionAvatarView : UIView
+@property(nonatomic, readonly) NSArray *subviews;
+@property(nonatomic, readonly) CGRect frame;
+@end
+
+//直播间流量提醒弹窗
+@interface AWELiveFlowAlertView : UIView
 @end
