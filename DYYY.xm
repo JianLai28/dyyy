@@ -889,14 +889,12 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 - (id)initWithDictionary:(id)arg1 error:(id *)arg2 {
     id orig = %orig;
     
-    //BOOL hasLiveStreamURLProperty = class_getProperty([AWEAwemeModel class], "liveStreamURL") != NULL;
-    BOOL hasLiveStreamURLProperty = [self valueForKey:@"liveStreamURL"] != nil;
     BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
-    
+    BOOL skipLive = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"];
     BOOL skipHotSpot = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipHotSpot"];
     
     BOOL shouldFilterAds = noAds && (self.hotSpotLynxCardModel || self.isAds);
- 
+    BOOL shouldFilterRec = skipLive && [self.liveReason isEqualToString:@"rec"];
     BOOL shouldFilterHotSpot = skipHotSpot && self.hotSpotLynxCardModel;
 
     BOOL shouldFilterLowLikes = NO;
@@ -971,18 +969,18 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
             }
         }
     }
-    return (shouldFilterAds || shouldFilterHotSpot || self.isLive  || shouldFilterLowLikes || shouldFilterKeywords || shouldFilterTime) ? nil : orig;
+    return (shouldFilterAds || shouldFilterRec || shouldFilterHotSpot || shouldFilterLowLikes || shouldFilterKeywords || shouldFilterTime) ? nil : orig;
 }
 
 - (id)init {
     id orig = %orig;
-
+    
     BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
-    
+    BOOL skipLive = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"];
     BOOL skipHotSpot = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipHotSpot"];
-
-    BOOL shouldFilterAds = noAds && (self.hotSpotLynxCardModel || self.isAds);
     
+    BOOL shouldFilterAds = noAds && (self.hotSpotLynxCardModel || self.isAds);
+    BOOL shouldFilterRec = skipLive && [self.liveReason isEqualToString:@"rec"];
     BOOL shouldFilterHotSpot = skipHotSpot && self.hotSpotLynxCardModel;
     
     BOOL shouldFilterLowLikes = NO;
@@ -1058,7 +1056,7 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
         }
     }
     
-    return (shouldFilterAds || shouldFilterHotSpot || self.isLive || shouldFilterLowLikes || shouldFilterKeywords || shouldFilterTime) ? nil : orig;
+    return (shouldFilterAds || shouldFilterRec || shouldFilterHotSpot || shouldFilterLowLikes || shouldFilterKeywords || shouldFilterTime) ? nil : orig;
 }
 
 - (bool)preventDownload {
@@ -1077,55 +1075,6 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
     
     %orig;
 }
-
-
-- (void)setLiveStreamURL:(id)url {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"]) {
-        %orig(nil); 
-    } else {
-        %orig(url); 
-    }
-}
-
-
-- (id)liveStreamURl {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"]) {
-        return nil;
-    }
-    return %orig;
-}
-
-- (void)live_callInitWithDictyCategoryMethod:(id)arg1 {
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"]) {
-        %orig;
-    }
-}
-
-+ (id)liveStreamURLJSONTransformer {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"]) {
-        return nil;
-    }
-    return %orig;
-}
-+ (id)relatedLiveJSONTransformer {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"]) {
-        return nil;
-    }
-    return %orig;
-}
-+ (id)rawModelFromLiveRoomModel:(id)arg1 {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"]) {
-        return nil;
-    }
-    return %orig;
-}
-+ (id)aweLiveRoom_subModelPropertyKey {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"]) {
-        return nil;
-    }
-    return %orig;
-}
-
 
 %end
 
@@ -1270,14 +1219,40 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 
 %end
 
-//隐藏评论定位
+//隐藏评论区定位
 %hook AWEPOIEntryAnchorView
-- (void)layoutSubviews {
-    %orig;
-    
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentViews"]) {
-        [self setHidden:YES];
-    }
+
+- (void)p_addViews {
+  // 检查用户偏好设置
+  if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentViews"]) {
+    // 直接跳过视图添加流程
+    return;
+  }
+  // 执行原始方法
+  %orig;
+}
+
+- (void)setIconUrls:(id)arg1 defaultImage:(id)arg2 {
+  // 根据需求选择是否拦截资源加载
+  if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentViews"]) {
+    // 可选：传入空值阻止资源加载
+    %orig(nil, nil);
+    return;
+  }
+  // 正常传递参数
+  %orig(arg1, arg2);
+}
+
+- (void)setContentSize:(CGSize)arg1 {
+  // 可选：动态调整尺寸计算逻辑
+  if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentViews"]) {
+    // 计算不包含评论视图的尺寸
+    CGSize newSize = CGSizeMake(arg1.width, arg1.height - 44); // 示例减法
+    %orig(newSize);
+    return;
+  }
+  // 保持原有尺寸计算
+  %orig(arg1);
 }
 
 %end
@@ -1348,23 +1323,34 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
     }
 }
 
-// 隐藏大家都在搜留白
+// 隐藏大家都在搜
 %hook AWESearchAnchorListModel
-- (id)init {
+
+- (void)setHideWords:(BOOL)arg1 {
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentViews"]) {
-        return nil;
+        %orig(YES);
+    } else {
+        %orig(arg1);
     }
-    return %orig;
+}
+
+- (void)setScene:(id)arg1 {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentViews"]) {
+        NSDictionary *customScene = @{@"hideComments": @YES};
+        %orig(customScene);
+    } else {
+        %orig(arg1);
+    }
 }
 %end
 
-// 隐藏评论汽水音乐留白
-%hook AWEMusicModel
+//隐藏观看历史搜索
+%hook AWEDiscoverFeedEntranceView
 - (id)init {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideCommentViews"]) {
-        return nil;
-    }
-    return %orig;
+  if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideInteractionSearch"]) {
+    return nil;
+  }
+  return %orig;
 }
 %end
 
@@ -1402,7 +1388,7 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 
 %end
 
-//去除“我的”加入挑战横幅
+//去除"我的"加入挑战横幅
 %hook AWEPostWorkViewController
 - (BOOL)isDouGuideTipViewShow {
     BOOL r = %orig;
@@ -3048,48 +3034,9 @@ static CGFloat currentScale = 1.0;
             if ([viewController isKindOfClass:%c(AWELiveNewPreStreamViewController)]) {
                 CGRect frame = self.frame;
                 if (stream_frame_y != 0){
-                    frame.origin.y == stream_frame_y; 
+                    frame.origin.y = stream_frame_y; 
                     self.frame = frame;
                 }
-            }
-        }
-    }
-    
-    NSString *scaleValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYElementScale"];
-    if ([self.accessibilityLabel isEqualToString:@"right"]) {
-        if (scaleValue.length > 0) {
-            CGFloat scale = [scaleValue floatValue];
-            if(currentScale !=  scale){
-                currentScale = scale;
-                right_tx = 0;
-                left_tx = 0;
-            }
-            if (scale > 0 && scale != 1.0) {
-                CGFloat ty = 0;
-                for(UIView *view in self.subviews){
-                    ty += (view.frame.size.height - view.frame.size.height * scale)/2;
-                }
-                if(right_tx == 0){
-                    right_tx = (self.frame.size.width - self.frame.size.width * scale)/2;
-                }
-                self.transform = CGAffineTransformMake(scale, 0, 0, scale, right_tx, ty);
-            }
-        }
-    }
-
-    if ([self.accessibilityLabel isEqualToString:@"left"]) {
-        NSString *scaleValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYNicknameScale"];
-        if (scaleValue.length > 0) {
-            CGFloat scale = [scaleValue floatValue];
-            if (scale > 0 && scale != 1.0) {
-                CGFloat ty = 0;
-                for(UIView *view in self.subviews){
-                    ty += (view.frame.size.height - view.frame.size.height * scale)/2;
-                }
-                if(left_tx == 0){
-                    left_tx = (self.frame.size.width - self.frame.size.width * scale)/2 - self.frame.size.width * (1 -scale);
-                }
-                self.transform = CGAffineTransformMake(scale, 0, 0, scale, left_tx, ty);
             }
         }
     }
@@ -3106,48 +3053,9 @@ static CGFloat currentScale = 1.0;
             if ([viewController isKindOfClass:%c(AWELiveNewPreStreamViewController)]) {
                 CGRect frame = self.frame;
                 if (stream_frame_y != 0){
-                    frame.origin.y == stream_frame_y; 
+                    frame.origin.y = stream_frame_y; 
                     self.frame = frame;
                 }
-            }
-        }
-    }
-    
-    NSString *scaleValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYElementScale"];
-    if ([self.accessibilityLabel isEqualToString:@"right"]) {
-        if (scaleValue.length > 0) {
-            CGFloat scale = [scaleValue floatValue];
-            if(currentScale !=  scale){
-                currentScale = scale;
-                right_tx = 0;
-                left_tx = 0;
-            }
-            if (scale > 0 && scale != 1.0) {
-                CGFloat ty = 0;
-                for(UIView *view in self.subviews){
-                    ty += (view.frame.size.height - view.frame.size.height * scale)/2;
-                }
-                if(right_tx == 0){
-                    right_tx = (self.frame.size.width - self.frame.size.width * scale)/2;
-                }
-                self.transform = CGAffineTransformMake(scale, 0, 0, scale, right_tx, ty);
-            }
-        }
-    }
-
-    if ([self.accessibilityLabel isEqualToString:@"left"]) {
-        NSString *scaleValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYNicknameScale"];
-        if (scaleValue.length > 0) {
-            CGFloat scale = [scaleValue floatValue];
-            if (scale > 0 && scale != 1.0) {
-                CGFloat ty = 0;
-                for(UIView *view in self.subviews){
-                    ty += (view.frame.size.height - view.frame.size.height * scale)/2;
-                }
-                if(left_tx == 0){
-                    left_tx = (self.frame.size.width - self.frame.size.width * scale)/2 - self.frame.size.width * (1 -scale);
-                }
-                self.transform = CGAffineTransformMake(scale, 0, 0, scale, left_tx, ty);
             }
         }
     }
@@ -3173,39 +3081,64 @@ static CGFloat currentScale = 1.0;
 
     NSString *scaleValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYElementScale"];
     if ([self.accessibilityLabel isEqualToString:@"right"]) {
+        
+        self.transform = CGAffineTransformIdentity;
+        
         if (scaleValue.length > 0) {
             CGFloat scale = [scaleValue floatValue];
+            
             if(currentScale !=  scale){
                 currentScale = scale;
-                right_tx = 0;
-                left_tx = 0;
             }
+            
             if (scale > 0 && scale != 1.0) {
                 CGFloat ty = 0;
+                
                 for(UIView *view in self.subviews){
-                    ty += (view.frame.size.height - view.frame.size.height * scale)/2;
+                    CGFloat viewHeight = view.frame.size.height;
+                    CGFloat contribution = (viewHeight - viewHeight * scale)/2;
+                    ty += contribution;
                 }
-                if(right_tx == 0){
-                    right_tx = (self.frame.size.width - self.frame.size.width * scale)/2;
-                }
+                
+                CGFloat frameWidth = self.frame.size.width;
+                right_tx = (frameWidth - frameWidth * scale)/2;
+                
                 self.transform = CGAffineTransformMake(scale, 0, 0, scale, right_tx, ty);
+            } else {
+                self.transform = CGAffineTransformIdentity;
             }
+        } else {
         }
     }
 
     if ([self.accessibilityLabel isEqualToString:@"left"]) {
         NSString *scaleValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYNicknameScale"];
+        
+        // 首先恢复到原始状态，确保变换不会累积
+        self.transform = CGAffineTransformIdentity;
+        
         if (scaleValue.length > 0) {
             CGFloat scale = [scaleValue floatValue];
+            
+            if(currentScale !=  scale){
+                currentScale = scale;
+            }
+            
             if (scale > 0 && scale != 1.0) {
                 CGFloat ty = 0;
+                
                 for(UIView *view in self.subviews){
-                    ty += (view.frame.size.height - view.frame.size.height * scale)/2;
+                    CGFloat viewHeight = view.frame.size.height;
+                    CGFloat contribution = (viewHeight - viewHeight * scale)/2;
+                    ty += contribution;
                 }
-                if(left_tx == 0){
-                    left_tx = (self.frame.size.width - self.frame.size.width * scale)/2 - self.frame.size.width * (1 -scale);
-                }
+                
+                CGFloat frameWidth = self.frame.size.width;
+                left_tx = (frameWidth - frameWidth * scale)/2 - frameWidth * (1 - scale);
+                
                 self.transform = CGAffineTransformMake(scale, 0, 0, scale, left_tx, ty);
+            } else {
+                self.transform = CGAffineTransformIdentity;
             }
         }
     }
